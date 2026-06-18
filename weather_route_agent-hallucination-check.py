@@ -43,6 +43,8 @@ import asyncio
 import re
 from dataclasses import dataclass, field
 
+from kubernetes.client import V1PodSpec, V1Container
+
 import flyte
 import requests
 
@@ -72,7 +74,7 @@ DEFAULT_MODEL = "claude-sonnet-4-6"  # swap for "claude-opus-4-8" or "claude-hai
 
 # One shared image so both environments are image-compatible.
 image = flyte.Image.from_debian_base(python_version=(3, 12), registry="docker.io/bdecoste").with_pip_packages(
-    "requests", "anthropic"
+    "requests", "anthropic", "kubernetes"
 )
 
 # LLM task environment: gets the Anthropic key injected as an env var.
@@ -89,6 +91,12 @@ data_env = flyte.TaskEnvironment(
     name="weather_route",
     image=image,
     depends_on=[llm_env],
+    pod_template=flyte.PodTemplate(
+        primary_container_name="primary",
+        labels={"app": "weather-route", "component": "data"},
+        annotations={"owner": "bill"},
+        pod_spec=V1PodSpec(containers=[V1Container(name="primary")]),   # <-- required
+    )
 )
 
 
@@ -270,7 +278,13 @@ def _geocode_place(location: str) -> Coordinate:
     )
 
 
-@data_env.task
+@data_env.task(
+    pod_template=flyte.PodTemplate(
+        primary_container_name="primary",
+        labels={"app": "weather-route", "component": "geocode"},
+        pod_spec=V1PodSpec(containers=[V1Container(name="primary")]),
+    )
+)
 def geocode(location: str) -> Coordinate:
     """Place name / "City, ST" / ZIP -> Coordinate.
 
@@ -284,7 +298,13 @@ def geocode(location: str) -> Coordinate:
     return _geocode_place(loc)
 
 
-@data_env.task
+@data_env.task(
+    pod_template=flyte.PodTemplate(
+        primary_container_name="primary",
+        labels={"app": "weather-route", "component": "get_route"},
+        pod_spec=V1PodSpec(containers=[V1Container(name="primary")]),
+    )
+)
 def get_route(start: Coordinate, end: Coordinate, max_samples: int = 8) -> RouteInfo:
     """Driving route via the public OSRM server; samples waypoints by distance."""
     url = (
@@ -316,7 +336,13 @@ def get_route(start: Coordinate, end: Coordinate, max_samples: int = 8) -> Route
     )
 
 
-@data_env.task
+@data_env.task(
+    pod_template=flyte.PodTemplate(
+        primary_container_name="primary",
+        labels={"app": "weather-route", "component": "get_weather"},
+        pod_spec=V1PodSpec(containers=[V1Container(name="primary")]),
+    )
+)
 def get_weather(point: Coordinate) -> WeatherPoint:
     """NWS forecast for one coordinate. Errors are captured, not raised, so a
     single bad point never sinks the whole run."""
