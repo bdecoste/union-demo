@@ -93,7 +93,7 @@ data_env = flyte.TaskEnvironment(
     depends_on=[llm_env],
     pod_template=flyte.PodTemplate(
         primary_container_name="primary",
-        labels={"app": "weather-route", "component": "data"},
+        labels={"app": "weather-route", "task": "data"},
         annotations={"owner": "bill"},
         pod_spec=V1PodSpec(containers=[V1Container(name="primary")]),   # <-- required
     )
@@ -223,9 +223,6 @@ def _verify_against_digest(briefing: str, weather: list["WeatherPoint"]) -> list
     return issues
 
 
-# --------------------------------------------------------------------------- #
-# Tasks
-# --------------------------------------------------------------------------- #
 def _geocode_zip(zipcode: str) -> Coordinate:
     """US ZIP -> Coordinate via Zippopotam.us (free, no key, server-friendly)."""
     resp = requests.get(f"https://api.zippopotam.us/us/{zipcode}", timeout=30)
@@ -277,11 +274,13 @@ def _geocode_place(location: str) -> Coordinate:
         longitude=float(chosen["longitude"]),
     )
 
-
+# --------------------------------------------------------------------------- #
+# Tasks
+# --------------------------------------------------------------------------- #
 @data_env.task(
     pod_template=flyte.PodTemplate(
         primary_container_name="primary",
-        labels={"app": "weather-route", "component": "geocode"},
+        labels={"app": "weather-route", "task": "geocode"},
         pod_spec=V1PodSpec(containers=[V1Container(name="primary")]),
     )
 )
@@ -301,7 +300,7 @@ def geocode(location: str) -> Coordinate:
 @data_env.task(
     pod_template=flyte.PodTemplate(
         primary_container_name="primary",
-        labels={"app": "weather-route", "component": "get_route"},
+        labels={"app": "weather-route", "task": "get_route"},
         pod_spec=V1PodSpec(containers=[V1Container(name="primary")]),
     )
 )
@@ -339,7 +338,7 @@ def get_route(start: Coordinate, end: Coordinate, max_samples: int = 8) -> Route
 @data_env.task(
     pod_template=flyte.PodTemplate(
         primary_container_name="primary",
-        labels={"app": "weather-route", "component": "get_weather"},
+        labels={"app": "weather-route", "task": "get_weather"},
         pod_spec=V1PodSpec(containers=[V1Container(name="primary")]),
     )
 )
