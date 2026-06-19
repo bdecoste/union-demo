@@ -73,7 +73,7 @@ US_STATES = {
 DEFAULT_MODEL = "claude-sonnet-4-6"  # swap for "claude-opus-4-8" or "claude-haiku-4-5-20251001"
 
 # One shared image so both environments are image-compatible.
-image = flyte.Image.from_debian_base(python_version=(3, 12), registry="docker.io/bdecoste").with_pip_packages(
+image = flyte.Image.from_debian_base(python_version=(3, 12)).with_pip_packages(
     "requests", "anthropic", "kubernetes"
 )
 
