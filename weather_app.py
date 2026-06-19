@@ -55,7 +55,7 @@ def server():
 #        flyte.init_in_cluster(
 #            project="flytesnacks",
 #            domain="development",
-#            endpoint="dns://flyte-binary-http.flyte.svc.cluster.local:8090",
+#            endpoint="dns:///flyte-binary-http.flyte.svc.cluster.local:8090",
 #            insecure=True,   # devbox is plaintext; use http://, not https://
 #        )
 #    else:
