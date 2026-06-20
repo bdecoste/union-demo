@@ -403,7 +403,13 @@ async def call_claude(model: str, max_tokens: int, prompt: str) -> str:
     return "".join(block.text for block in msg.content if block.type == "text")
 
 
-@llm_env.task
+@llm_env.task(
+    pod_template=flyte.PodTemplate(
+        primary_container_name="primary",
+        labels={"app": "weather-route", "task": "summarize"},
+        pod_spec=V1PodSpec(containers=[V1Container(name="primary")]),
+    )
+)
 async def summarize(
     start_name: str,
     end_name: str,
@@ -489,7 +495,13 @@ Respond with ONLY a JSON object, no prose, no markdown fences:
     return text
 
 
-@llm_env.task
+@llm_env.task(
+    pod_template=flyte.PodTemplate(
+        primary_container_name="primary",
+        labels={"app": "weather-route", "task": "verify"},
+        pod_spec=V1PodSpec(containers=[V1Container(name="primary")]),
+    )
+)
 async def verify(
     weather: list[WeatherPoint],
     briefing: str,
