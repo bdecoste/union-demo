@@ -189,7 +189,7 @@ def _build_digest(weather: list["WeatherPoint"]) -> str:
 # "rain" are excluded: too common in forecasts to flag reliably.
 _HAZARDS = ("snow", "ice", "sleet", "freezing", "fog", "thunder", "flood", "hail", "blizzard")
 
-
+@flyte.trace
 def _verify_against_digest(briefing: str, weather: list["WeatherPoint"]) -> list[str]:
     """High-precision deterministic checks: every number/hazard asserted in the
     briefing must trace back to data we actually supplied. Returns a list of
